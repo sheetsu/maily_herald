@@ -24,7 +24,15 @@ module MailyHerald
 
         drop = Class.new(Liquid::Drop) do
           def has_key?(name); true; end
-          def invoke_drop(name); true; end
+          def invoke_drop(name)
+            Class.new(Liquid::Drop) do
+              def has_key?(name); true; end
+              def invoke_drop(name)
+                1337
+              end
+              alias :[] :invoke_drop
+            end.new
+          end
           alias :[] :invoke_drop
         end.new
 
