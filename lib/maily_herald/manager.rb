@@ -30,8 +30,8 @@ module MailyHerald
     # Check if Maily sidekiq job is running.
     def self.job_enqueued?
       Sidekiq::Queue.new.detect{|j| j.klass == "MailyHerald::Async" } ||
-        Sidekiq::Workers.new.detect{|w, msg| msg["payload"].try(:[], "class") == "MailyHerald::Async" } ||
-        Sidekiq::RetrySet.new.detect{|j| j.try(:klass) == "MailyHerald::Async" }
+        Sidekiq::Workers.new.detect{|w, msg| msg["payload"] && msg["class"] == "MailyHerald::Async" } ||
+        Sidekiq::RetrySet.new.detect{|j| j.klass == "MailyHerald::Async" }
     rescue StandardError => e
       $stderr.puts "Got unexpected error from Sidekiq: #{e}\n#{e.backtrace.join("\n")}"
       true
