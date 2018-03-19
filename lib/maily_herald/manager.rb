@@ -11,7 +11,7 @@ module MailyHerald
 
     # Run scheduled periodical mailing deliveres.
     #
-    # @param mailing [PeriodicalMailing, OneTimeMailing, String, Symbol] 
+    # @param mailing [PeriodicalMailing, OneTimeMailing, String, Symbol]
     #           {AdHocMailing}, {OneTimeMailing} or {PeriodicalMailing} object or name
     def self.run_mailing mailing
       mailing = Mailing.find_by_name(mailing) unless mailing.is_a?(Mailing)
@@ -29,9 +29,12 @@ module MailyHerald
 
     # Check if Maily sidekiq job is running.
     def self.job_enqueued?
-      Sidekiq::Queue.new.detect{|j| j.klass == "MailyHerald::Async" } || 
-        Sidekiq::Workers.new.detect{|w, msg| msg["payload"]["class"] == "MailyHerald::Async" } ||
-        Sidekiq::RetrySet.new.detect{|j| j.klass = "MailyHerald::Async" }
+      Sidekiq::Queue.new.detect{|j| j.klass == "MailyHerald::Async" } ||
+        Sidekiq::Workers.new.detect{|w, msg| msg["payload"].try(:[], "class") == "MailyHerald::Async" } ||
+        Sidekiq::RetrySet.new.detect{|j| j.try(:klass) = "MailyHerald::Async" }
+    rescue StandardError => e
+      $stderr.puts "Got unexpected error from Sidekiq: #{e}\n#{e.backtrace.join("\n")}"
+      true
     end
   end
 end
